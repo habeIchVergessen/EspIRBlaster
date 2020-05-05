@@ -4,6 +4,8 @@
 #define PROGVERS "0.1"
 #define PROGBUILD String(__DATE__) + " " + String(__TIME__)
 
+#define _ESPIR_SUPPORT
+//#define _MQTT_SUPPORT
 
 #ifdef ESP8266
   #include <ESP8266WiFi.h>
@@ -16,10 +18,16 @@
   #include "Update.h"
 #endif
 
+//#define _DEBUG_HTTP
+
 #include "EspConfig.h"
 #include "EspDebug.h"
 #include "EspWifi.h"
 #include "EspIRController.h"
+#ifdef _MQTT_SUPPORT
+  #include "PubSubClient.h"
+  #include "EspMqtt.h"
+#endif
 
 // KeyValueProtocol with full format keys
 //#define KVP_LONG_KEY_FORMAT 1
@@ -40,6 +48,9 @@ EspWiFi espWiFi;
 EspDebug espDebug;
 
 EspIRController espIRController;
+#ifdef _MQTT_SUPPORT
+  EspMqtt espMqtt(PROGNAME);
+#endif
 
 unsigned long last = 0;
 
@@ -50,7 +61,6 @@ void setup() {
   espDebug.enableSerialOutput();
 
   DBG_PRINTLN("\n\n");
-  DBG_PRINTLN("Test");
 
   espConfig.setup();
   
@@ -58,6 +68,11 @@ void setup() {
 
   espDebug.begin();
   espDebug.registerInputCallback(handleInputStream);
+
+  espIRController.setup();
+#ifdef _MQTT_SUPPORT
+  espMqtt.setup();
+#endif
 }
 
 void loop() {
@@ -70,6 +85,10 @@ void loop() {
   // tools
   loopEspTools();
 
+//  espIRController.loop();
+#ifdef _MQTT_SUPPORT
+  espMqtt.loop();
+#endif
   // send debug data
   espDebug.loop();
 }
