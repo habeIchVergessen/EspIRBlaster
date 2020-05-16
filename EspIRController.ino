@@ -144,7 +144,7 @@ bool EspIRController::EspIRControllerRequestHandler::canHandle(WebServer& server
   if (canHandle(server.method(), server.uri()))
     return true;
 
-  if (server.method() == HTTP_POST && server.uri() == getConfigUri() && server.hasArg("ir") && server.arg("ir") == "")
+  if (server.method() == HTTP_POST && server.uri() == getConfigUri() && server.hasArg(menuIdentifierIR()) && server.arg(menuIdentifierIR()) == "")
     return true;
 
   return false;
@@ -167,7 +167,7 @@ bool EspIRController::EspIRControllerRequestHandler::handle(WebServer& server, H
   if (method == HTTP_POST && uri == getSendIRUri())
     return httpHandleSendIRCmd(server);
 
-  if (method == HTTP_POST && uri == getConfigUri() && server.hasArg("ir") && server.arg("ir") == "") {
+  if (method == HTTP_POST && uri == getConfigUri() && server.hasArg(menuIdentifierIR()) && server.arg(menuIdentifierIR()) == "") {
     String action = server.arg("action"), remote = "";
     if (server.hasArg("remote"))
       remote = server.arg("remote");
@@ -182,14 +182,13 @@ bool EspIRController::EspIRControllerRequestHandler::handle(WebServer& server, H
     String js = F("var bL;function initIR(r,rC){if(typeof rC==='undefined')rC=0;if(typeof window[r]==='undefined'){if(rC<10)wT('initIR(\\\''+r+'\\\')',rC+1);else alert('load failed '+rC+' times');return;}bL=window[r];var d=document.getElementById(\"rm\");while(d.hasChildNodes())d.removeChild(d.firstChild);for(var i=0;i<bL[5].length;i++){var b = bL[5][i];B(d,b[0],b[1],b[2],b[3],(b.length>=5?b[4]:bL[2]));}I(d, bL[0], bL[1]);}");
     js += F("function B(d,t,c,x,y,s){var nD=E(d,'div');nD.id='B'+c;A(nD,'style','top:'+x+'px;left:'+y+'px;');var nA=E(nD,'a');A(nA,'style','width:'+s+'px;height:'+s+'px;');A(nA,'onclick',\"C('\"+c+\"')\");A(nA,'title',t);}");
     js += F("function I(d,s,w){var img=E(d,'img');A(img,'src','data:'+s);A(img,'style','width:'+w+'px;');}");
-    js += F("function I(d,s,w){var img=E(d,'img');A(img,'src','data:'+s);A(img,'style','width:'+w+'px;');}");
     js += F("function A(t,n,v){t.setAttribute(n,v);}");
     js += F("function E(d,e){var c=document.createElement(e);d.appendChild(c);return c;}");
     js += F("function wT(s,t){if(typeof t==='undefined')t=100;window.setTimeout(s,t);}");
     js += F("function uR(){var f=gE('rUF');if(f.elements['remote'].value == ''){alert('Remote-Description File required!');return;}f.submit();lL();}");
     js += F("function rR(r){var rN=event.srcElement.parentNode.firstChild.innerHTML;var url='/config?ChipID='+cI()+'&action=remove&remote='+rN+'&ir=';if (typeof sReq('POST',url)!==\"undefined\")lL();}");
     js += F("function lR(r){var rN='/remote/'+r+'.js';var rNS=r+'.Remote';var rmS=document.querySelector('script[data-name=\"'+rNS+'\"]');if(typeof rmS===\"undefined\" || rmS == null)aSU(rN,gE('rm').parentNode,rNS);wT('initIR(\\\''+r+'\\\')');}");
-    js += F("function lF(a){if(rcvXhr!=null)rcvS();a=(a===undefined?'form':a);modDlg(true,false,'ir',a);}");
+    js += F("function lF(a){rcvSa();a=(a===undefined?'form':a);modDlg(true,false,'ir',a);}");
     js += F("function lL(){lF('list');}");
     js += F("function lU(){lF('upload');}");
     js += F("function lS(){lF('sample');}");
@@ -199,11 +198,12 @@ bool EspIRController::EspIRControllerRequestHandler::handle(WebServer& server, H
     js += F("';}");
     js += F("function sReq(m,u){try{var xmlHttp=new XMLHttpRequest();xmlHttp.open(m,u,false);xmlHttp.send(null);if(xmlHttp.status!=200){alert('Fehler: '+xmlHttp.statusText);return null;}else return xmlHttp;} catch(err) {return null;}}");
     js += F("var rcvXhr=null;var rcvC=0;\n");
-    js += F("function rcvS(){var aB=gE('sIR');if(rcvXhr!=null){rcvXhr.abort();rcvXhr=null;aB.innerHTML='Start';return;}aB.innerHTML='Stop';var o=gE('rdtO');while(o.childNodes.length>0)o.removeChild(o.lastChild);\nrcvC=0;rcvXhr=new XMLHttpRequest();rcvXhr.onprogress=rcvH;rcvXhr.onerror=rcvH;rcvXhr.open('POST','");
+    js += F("function rcvSa(){if(rcvXhr!=null)rcvS();}");
+    js += F("function rcvS(){var aB=gE('sIR');if(rcvXhr!=null){rcvXhr.abort();rcvXhr=null;aB.innerHTML='Start';modDlgEn(true);return;}aB.innerHTML='Stop';modDlgEn(false);var o=gE('rdtO');while(o.childNodes.length>0)o.removeChild(o.lastChild);\nrcvC=0;rcvXhr=new XMLHttpRequest();rcvXhr.onprogress=rcvH;rcvXhr.onerror=rcvH;rcvXhr.open('POST','");
     js += getRecvIRUri();
     js += F("',true);rcvXhr.send(null);}\n");
-    js += F("function rcvH(e){\nvar o=gE('rdtO');\nif(o){var rT=rcvXhr.responseText.split(':::');\nvar i;\nfor(i=0;i<rT.length;i++){\nif(i>=rcvC&&rT[i]!=''){\n");
-    js += F("rcvC+=1;\nvar tr=cE('tr');var s;var d=rT[i].split(':');\nfor(s=0;s<d.length;s++)\nif(d[s]!=''){\nvar td=cE('td');td.innerHTML=d[s];\naC(tr,td);}\naC(o,tr);}}window.setTimeout('scD(\\\'rd\\\')', 100);}}\n");
+    js += F("function rcvH(e){var o=gE('rdtO');if(o){var rT=rcvXhr.responseText.split(':::');var i;for(i=0;i<rT.length;i++){if(i>=rcvC&&rT[i]!=''){");
+    js += F("rcvC+=1;var tr=cE('tr');var s;var d=rT[i].split(':');for(s=0;s<d.length;s++)if(d[s]!=''){var td=cE('td');td.innerHTML=d[s];\naC(tr,td);}aC(o,tr);}}window.setTimeout('scD(\\\'rd\\\')', 100);}}");
     js += F("function scD(n){var o=gE(n);o.scrollTop=o.scrollHeight;}\n");
 
     server.sendHeader("Cache-Control", "public, max-age=86400");
@@ -326,8 +326,8 @@ bool EspIRController::EspIRControllerRequestHandler::httpHandleSendIRCmd(WebServ
 
     server.client().setNoDelay(true);
     server.send(200, "text/plain", "OK");
-    httpRequestProcessed = true;
-    return true;
+    
+    return (httpRequestProcessed = true);
   }
   
   return false;
@@ -472,6 +472,8 @@ String EspIRController::EspIRControllerRequestHandler::getIRForm(String action, 
 
     result = "<script>var o=gE('mDCC');";
     result += "o.innerHTML='" + html + "';";
+    if (!hasRemote)
+      result += "aSU('/static/remote.js',o);";
     result += "</script>";
 
     return result;
@@ -481,7 +483,19 @@ String EspIRController::EspIRControllerRequestHandler::getIRForm(String action, 
 }
 
 String EspIRController::EspIRControllerRequestHandler::menuHtml() {
-  return htmlMenuItem("ir", "Remotes");
+  return htmlMenuItem(menuIdentifierIR(), "Remotes");
+}
+
+uint8_t EspIRController::EspIRControllerRequestHandler::menuIdentifiers() {
+  return 1;
+}
+
+String EspIRController::EspIRControllerRequestHandler::menuIdentifiers(uint8_t identifier) {
+  switch (identifier) {
+    case 0: return menuIdentifierIR();break;
+  }
+
+  return "";
 }
 
 #endif  // ESP8266 || ESP32

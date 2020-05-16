@@ -22,7 +22,7 @@
 
 class EspIRController {
 public:
-  EspIRController(byte sendPin=D1, byte recvPin=D4);  // IRBlaster defaults
+  EspIRController(byte sendPin=5, byte recvPin=2);  // IRBlaster defaults
   ~EspIRController();
 
   void setup();
@@ -57,6 +57,9 @@ protected:
     bool canHandle(WebServer& server) { return false; } override;
   #endif
     String menuHtml() override;
+    uint8_t menuIdentifiers() override;
+    String menuIdentifiers(uint8_t identifier) override;
+    String menuIdentifierIR() { return "ir"; };
   
   private:
     File uploadFile;
